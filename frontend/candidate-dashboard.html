@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Dashboard - AI Resume Matcher</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">AI Resume Matcher</div>
+           <div class="top-right">
+    <ul class="nav-links">
+        <li><a href="#" onclick="logout()">Logout</a></li>
+    </ul>
+    <div class="profile-icon">VS</div>
+</div>
+            <!-- <div class="profile-icon" id="profileIcon"> -->
+                <span id="userInitials"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="dashboard">
+                <aside class="sidebar">
+                    <h3>Menu</h3>
+                    <ul>
+                        <li><a href="#" class="active" onclick="showSection('jobs')">Browse Jobs</a></li>
+                        <li><a href="#" onclick="showSection('upload-resume')">Upload Resume</a></li>
+                        <li><a href="#" onclick="showSection('applications')">My Applications</a></li>
+                        <li><a href="#" onclick="showSection('profile')">Profile</a></li>
+                    </ul>
+                </aside>
+
+                <div class="content">
+                    <!-- Jobs Section -->
+                    <div id="jobs-section" class="section">
+                        <h2>Available Jobs</h2>
+                        <div id="jobsContainer" class="job-grid">
+                            <!-- Jobs will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Upload Resume Section -->
+                    <div id="upload-resume-section" class="section hidden">
+                        <h2>Upload Resume</h2>
+                        <div id="uploadAlert" class="alert alert-success hidden"></div>
+                        
+                        <form id="resumeUploadForm">
+                            <div class="form-group">
+                                <label for="resume">Select Resume (PDF/DOC)</label>
+                                <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="skills">Skills (comma separated)</label>
+                                <input type="text" id="skills" name="skills" placeholder="JavaScript, Python, React, Node.js">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="experience">Experience (years)</label>
+                                <input type="number" id="experience" name="experience" min="0" max="50">
+                            </div>
+                            
+                            <button type="submit" class="btn">Save Profile</button>
+                        </form>
+                    </div>
+
+                    <!-- Applications Section -->
+                    <div id="applications-section" class="section hidden">
+                        <h2>My Applications</h2>
+                        <div class="table-container">
+                            <table id="applicationsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Company</th>
+                                        <th>Applied Date</th>
+                                        <th>Status</th>
+                                        <th>Match Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicationsTableBody">
+                                    <!-- Applications will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Profile Section -->
+                    <div id="profile-section" class="section hidden">
+                        <h2>Profile</h2>
+                        <div id="profileInfo">
+                            <!-- Profile info will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Job Application Modal -->
+    <div id="applicationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3>Apply for Job</h3>
+            <div id="jobDetails"></div>
+            <form id="jobApplicationForm">
+                <input type="hidden" id="jobId" name="job_id">
+                <div class="form-group">
+                    <label for="applicationResume">Upload Resume</label>
+                    <input type="file" id="applicationResume" name="resume" accept=".pdf,.doc,.docx" required>
+                </div>
+                <button type="submit" class="btn">Submit Application</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let currentUser = null;
+        
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || user.user_type !== 'candidate') {
+            window.location.href = 'login.html';
+        }
+        
+        currentUser = user;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNavForLoggedInUser(currentUser);
+            loadJobs();
+        });
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Remove active class from all menu items
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`${sectionName}-section`).classList.remove('hidden');
+            
+            // Add active class to clicked menu item
+            event.target.classList.add('active');
+            
+            // Load content based on section
+            switch(sectionName) {
+                case 'jobs':
+                    loadJobs();
+                    break;
+                case 'applications':
+                    loadApplications();
+                    break;
+                case 'profile':
+                    loadProfile();
+                    break;
+            }
+        }
+
+        async function loadJobs() {
+            try {
+                const response = await fetch('/api/jobs/matched/' + currentUser.id, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const jobs = await response.json();
+                displayJobs(jobs);
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        function displayJobs(jobs) {
+            const container = document.getElementById('jobsContainer');
+            
+            if (jobs.length === 0) {
+                container.innerHTML = '<p>No jobs available at the moment.</p>';
+                return;
+            }
+            
+            container.innerHTML = jobs.map(job => `
+                <div class="job-card">
+                    <h3>${job.title}</h3>
+                    <div class="company">${job.company}</div>
+                    <div class="location">📍 ${job.location}</div>
+                    ${job.salary ? `<div class="salary">💰 ${job.salary}</div>` : ''}
+                    <div class="match-score ${getMatchScoreClass(job.match_score)}">
+                        ${job.match_score}% Match
+                    </div>
+                    <p>${job.description ? job.description.substring(0, 150) + '...' : ''}</p>
+                    <button class="btn" onclick="openApplicationModal(${job.id}, '${job.title}', '${job.company}')">
+                        Apply Now
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function getMatchScoreClass(score) {
+            if (score >= 70) return 'high';
+            if (score >= 40) return 'medium';
+            return '';
+        }
+
+        function openApplicationModal(jobId, title, company) {
+            document.getElementById('jobId').value = jobId;
+            document.getElementById('jobDetails').innerHTML = `
+                <p><strong>Job:</strong> ${title}</p>
+                <p><strong>Company:</strong> ${company}</p>
+            `;
+            document.getElementById('applicationModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('applicationModal').style.display = 'none';
+        }
+
+        // Job application form
+        document.getElementById('jobApplicationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/api/applications/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Application submitted successfully!');
+                    closeModal();
+                    loadApplications();
+                } else {
+                    alert(data.error);
+                }
+            } catch (error) {
+                alert('Application failed. Please try again.');
+            }
+        });
+
+        async function loadApplications() {
+            try {
+                const response = await fetch('/api/applications/my-applications', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const applications = await response.json();
+                displayApplications(applications);
+            } catch (error) {
+                console.error('Error loading applications:', error);
+            }
+        }
+
+        function displayApplications(applications) {
+            const tbody = document.getElementById('applicationsTableBody');
+            
+            if (applications.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No applications yet.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = applications.map(app => `
+                <tr>
+                    <td>${app.title}</td>
+                    <td>${app.company}</td>
+                    <td>${new Date(app.applied_date).toLocaleDateString()}</td>
+                    <td><span class="status ${app.status}">${app.status}</span></td>
+                    <td>${app.match_score}%</td>
+                </tr>
+            `).join('');
+        }
+
+        function loadProfile() {
+            document.getElementById('profileInfo').innerHTML = `
+                <div class="form-group">
+                    <label>Name:</label>
+                    <p>${currentUser.full_name}</p>
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <p>${currentUser.email}</p>
+                </div>
+                <div class="form-group">
+                    <label>Account Type:</label>
+                    <p>Job Candidate</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

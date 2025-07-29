@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Screener & Job Matcher</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Enhanced animated background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Animated geometric shapes */
+        .geometric-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: shapeFloat 8s ease-in-out infinite;
+        }
+
+        .shape-triangle {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 25px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .shape-square {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(45deg);
+        }
+
+        .shape-circle {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes shapeFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            25% { transform: translateY(-30px) scale(1.1); }
+            75% { transform: translateY(20px) scale(0.9); }
+        }
+
+        /* Header Styles */
+        .header {
+            position: relative;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            animation: logoSpin 3s ease-in-out infinite;
+        }
+
+        @keyframes logoSpin {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(10deg); }
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 1 rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .profile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 5rem 0;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: textGlow 3s ease-in-out infinite alternate;
+            font-weight: 800;
+        }
+
+        @keyframes textGlow {
+            from { text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.3); }
+            to { text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 30px rgba(255,255,255,0.6); }
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            margin: 3rem 0;
+            animation: slideInUp 0.8s ease-out 0.5s both;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+            animation: countUp 2s ease-out;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        @keyframes countUp {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: white;
+            
+            margin-bottom: 3rem;
+            font-weight: 700;
+        }
+
+        .process-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3rem 0;
+            position: relative;
+        }
+
+        .process-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            animation: lineGrow 2s ease-out 1s both;
+        }
+
+        @keyframes lineGrow {
+            from { width: 0; }
+            to { width: 80%; }
+        }
+
+        .process-step {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem 1.5rem;
+            width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: processSlide 0.8s ease-out both;
+            position: relative;
+        }
+
+        .process-step:nth-child(1) { animation-delay: 0.2s; }
+        .process-step:nth-child(2) { animation-delay: 0.4s; }
+        .process-step:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes processSlide {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .process-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: white;
+            animation: iconBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes iconBounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .process-title {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .process-description {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #a8edea, #fed6e3);
+            color: #333;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.8s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+            animation: featureIconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes featureIconFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .feature-card h3 {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card .btn {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* AI Features Showcase */
+        .ai-showcase {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ai-features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .ai-feature {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .ai-feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .ai-feature i {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: aiIconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes aiIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .ai-feature h4 {
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .ai-feature p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .testimonial {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .testimonial:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .testimonial-content {
+            color: rgba(255, 255, 255, 0.9);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .author-info h5 {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .author-info p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cta-content h2 {
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .cta-content p {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .process-timeline {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .process-timeline::before {
+                display: none;
+            }
+
+            .process-step {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .feature-grid,
+            .ai-features-grid,
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        body {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        /* Progress bars for skills matching */
+        .skill-match-demo {
+            margin: 2rem 0;
+        }
+
+        .skill-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .skill-progress {
+            height: 8px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            border-radius: 10px;
+            animation: progressFill 2s ease-out;
+        }
+
+        @keyframes progressFill {
+            from { width: 0%; }
+        }
+
+        .skill-label {
+            color: white;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="geometric-shapes" id="geometricShapes"></div>
+    
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                AI Resume Matcher
+            </div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                <li><a href="signup.html"><i class="fas fa-user-plus"></i> Sign Up</a></li>
+            </ul>
+            <div class="profile-icon hidden" id="profileIcon">
+                <span id="userInitials"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <section class="hero" id="home">
+            <div class="container">
+                <h1>Find Your Perfect Match</h1>
+                <p>AI-powered resume screening and job matching platform that revolutionizes recruitment for both candidates and employers</p>
+                <div>
+                    <a href="signup.html?type=candidate" class="btn">
+                        <i class="fas fa-user"></i> Join as Candidate
+                    </a>
+                    <a href="signup.html?type=hr" class="btn btn-secondary">
+                        <i class="fas fa-briefcase"></i> Join as HR
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="container">
+            <div class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">7+</span>
+                        <div class="stat-label">Candidates Matched</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">11+</span>
+                        <div class="stat-label">Companies Hiring</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">95%</span>
+                        <div class="stat-label">Matching Accuracy</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">48h</span>
+                        <div class="stat-label">Average Response Time</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="how-it-works">
+            <div class="container">
+                <h2 class="section-title">How It Works</h2>
+                <div class="process-timeline">
+                    <div class="process-step">
+                        <div class="process-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h3 class="process-title">Upload & Analyze</h3>
+                        <p class="process-description">Upload your resume or job description. Our AI instantly analyzes skills, experience, and requirements.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="process-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="process-title">AI Matching</h3>
+                        <p class="process-description">Advanced algorithms compare profiles and generate compatibility scores based on multiple factors.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="process-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h3 class="process-title">Perfect Match</h3>
+                        <p class="process-description">Get connected with your ideal job opportunities or top talent candidates instantly.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Features Showcase -->
+        <section class="container">
+            <div class="ai-showcase">
+                <h2 class="section-title">Powered by Advanced AI</h2>
+                <p style="color: rgba(255,255,255,0.9); font-size: 1.2rem; margin-bottom: 2rem;">
+                    Experience the future of recruitment with our cutting-edge artificial intelligence
+                </p>
+                <div class="ai-features-grid">
+                    <div class="ai-feature">
+                        <i class="fas fa-language"></i>
+                        <h4>Natural Language Processing</h4>
+                        <p>Understands context and nuance in resumes and job descriptions</p>
+                    </div>
+                    <div class="ai-feature">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Predictive Analytics</h4>
+                        <p>Forecasts candidate success and job satisfaction rates</p>
+                    </div>
+                    <div class="ai-feature">
+                        <i class="fas fa-cogs"></i>
+                        <h4>Machine Learning</h4>
+                        <p>Continuously improves matching accuracy with each interaction</p>
+                    </div>
+                    <div class="ai-feature">
+                        <i class="fas fa-bullseye"></i>
+                        <h4>Skill Matching</h4>
+                        <p>Precisely matches technical and soft skills requirements</p>
+                    </div>
+                </div>
+
+                <!-- Skill Matching Demo -->
+                <div class="skill-match-demo">
+                    <h4 style="color: white; margin: 2rem 0 1rem; font-size: 1.3rem;">Live Skill Matching Demo</h4>
+                    <div class="skill-bar">
+                        <div class="skill-label">
+                            <span>JavaScript</span>
+                            <span>92%</span>
+                        </div>
+                        <div class="skill-progress" style="width: 92%;"></div>
+                    </div>
+                    <div class="skill-bar">
+                        <div class="skill-label">
+                            <span>Project Management</span>
+                            <span>87%</span>
+                        </div>
+                        <div class="skill-progress" style="width: 87%; animation-delay: 0.5s;"></div>
+                    </div>
+                    <div class="skill-bar">
+                        <div class="skill-label">
+                            <span>Team Leadership</span>
+                            <span>94%</span>
+                        </div>
+                        <div class="skill-progress" style="width: 94%; animation-delay: 1s;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Cards -->
+        <section class="container">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h3>For Candidates</h3>
+                    <p>Upload your resume and get matched with relevant job opportunities based on your skills, experience, and career goals. Our AI provides personalized recommendations and career insights.</p>
+                    <a href="signup.html?type=candidate" class="btn">Get Started</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3>For HR & Recruiters</h3>
+                    <p>Post jobs, screen candidates automatically, and find the best talent with AI-powered matching. Reduce hiring time by 70% and improve candidate quality significantly.</p>
+                    <a href="signup.html?type=hr" class="btn">Get Started</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI-Powered Matching</h3>
+                    <p>Our advanced algorithms analyze resumes and job descriptions to provide accurate matching scores, considering skills, experience, culture fit, and growth potential.</p>
+                    <button class="btn" onclick="showMatchingDemo()">See Demo</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="testimonials">
+            <div class="container">
+                <h2 class="section-title">What Our Users Say</h2>
+                <div class="testimonials-grid">
+                    <div class="testimonial">
+                        <div class="testimonial-content">
+                            "This platform found me my dream job in just 2 days! The AI matching is incredibly accurate."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">SM</div>
+                            <div class="author-info">
+                                <h5>Vishal Sharma</h5>
+                                <p>Software Engineer</p>
+                                <p>Triazine software pvt ltd.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial">
+                        <div class="testimonial-content">
+                            "We reduced our hiring time by 65% and found better quality candidates. Game changer!"
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">JR</div>
+                            <div class="author-info">
+                                <h5>Sumit Kumar Gupta</h5>
+                                <p>QA & Tester</p>
+                                <p>Triazine software pvt ltd.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial">
+                        <div class="testimonial-content">
+                            "The personalized career insights helped me understand my market value and skill gaps."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">AL</div>
+                            <div class="author-info">
+                                <h5>Gautam Dua</h5>
+                                <p>The Jam Analytics</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="container">
+            <div class="cta-section">
+                <div class="cta-content">
+                    <h2>Ready to Transform Your Career?</h2>
+                    <p>Join thousands of professionals who have found their perfect match with our AI-powered platform</p>
+                    <div>
+                        <a href="signup.html?type=candidate" class="btn">
+                            <i class="fas fa-rocket"></i> Start Your Journey
+                        </a>
+                        <a href="signup.html?type=hr" class="btn btn-secondary">
+                            <i class="fas fa-users"></i> Hire Top Talent
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Enhanced particle system
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 60;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 8 + 4;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                particle.style.animationDelay = `${Math.random() * 6}s`;
+                particle.style.animationDuration = `${6 + Math.random() * 4}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Create geometric shapes
+        function createGeometricShapes() {
+            const shapesContainer = document.getElementById('geometricShapes');
+            const shapeTypes = ['triangle', 'square', 'circle'];
+            const shapeCount = 20;
+            
+            for (let i = 0; i < shapeCount; i++) {
+                const shape = document.createElement('div');
+                const shapeType = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+                
+                shape.className = `shape shape-${shapeType}`;
+                shape.style.left = `${Math.random() * 100}%`;
+                shape.style.top = `${Math.random() * 100}%`;
+                shape.style.animationDelay = `${Math.random() * 8}s`;
+                shape.style.animationDuration = `${8 + Math.random() * 4}s`;
+                
+                shapesContainer.appendChild(shape);
+            }
+        }
+
+        // Animate counting numbers
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-number');
+            counters.forEach(counter => {
+                const target = counter.textContent;
+                const isPercentage = target.includes('%');
+                const isTime = target.includes('h');
+                const numericValue = parseInt(target.replace(/[^\d]/g, ''));
+                
+                let start = 0;
+                const increment = numericValue / 50;
+                
+                const timer = setInterval(() => {
+                    start += increment;
+                    if (start >= numericValue) {
+                        counter.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        let displayValue = Math.floor(start);
+                        if (target.includes('K+')) {
+                            counter.textContent = `${(displayValue / 1000).toFixed(1)}K+`;
+                        } else if (isPercentage) {
+                            counter.textContent = `${displayValue}%`;
+                        } else if (isTime) {
+                            counter.textContent = `${displayValue}h`;
+                        } else {
+                            counter.textContent = displayValue;
+                        }
+                    }
+                }, 50);
+            });
+        }
+
+        // Enhanced scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    
+                    // Trigger counter animation for stats
+                    if (entry.target.classList.contains('stats-section')) {
+                        animateCounters();
+                    }
+                }
+            });
+        }, observerOptions);
+
+        // Smooth scrolling for navigation
+        function smoothScroll(target) {
+            document.querySelector(target).scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Demo function for AI matching
+        function showMatchingDemo() {
+            alert('🤖 AI Matching Demo:\n\n✅ Resume Analysis: Complete\n✅ Skill Extraction: 15 skills found\n✅ Job Matching: 8 relevant positions\n✅ Compatibility Score: 94%\n\nSign up to see real results!');
+        }
+
+        // Enhanced parallax effect
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth) * 100;
+            const mouseY = (e.clientY / window.innerHeight) * 100;
+            
+            // Move particles based on mouse position
+            document.querySelectorAll('.particle').forEach((particle, index) => {
+                const speed = (index % 5 + 1) * 0.5;
+                particle.style.transform = `translate(${mouseX * speed * 0.01}px, ${mouseY * speed * 0.01}px)`;
+            });
+            
+            // Move geometric shapes
+            document.querySelectorAll('.shape').forEach((shape, index) => {
+                const speed = (index % 3 + 1) * 0.3;
+                shape.style.transform = `translate(${mouseX * speed * 0.01}px, ${mouseY * speed * 0.01}px)`;
+            });
+        });
+
+        // Ripple effect for buttons
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('ripple');
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Add ripple CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .ripple {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.4);
+                transform: scale(0);
+                animation: rippleEffect 0.6s linear;
+                pointer-events: none;
+            }
+            
+            @keyframes rippleEffect {
+                to {
+                    transform: scale(2);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            createGeometricShapes();
+            
+            // Observe elements for animations
+            document.querySelectorAll('.feature-card, .stats-section, .ai-feature, .testimonial, .process-step').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // Add navigation click handlers
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('href');
+                    if (target !== '#home') return;
+                    smoothScroll(target);
+                });
+            });
+        });
+
+        // Simulate user data for demonstration
+        let userData = {};
+        
+        function updateNavForLoggedInUser(user) {
+            const navLinks = document.getElementById('navLinks');
+            const profileIcon = document.getElementById('profileIcon');
+            const userInitials = document.getElementById('userInitials');
+            
+            if (navLinks) navLinks.style.display = 'none';
+            if (profileIcon) profileIcon.classList.remove('hidden');
+            if (userInitials) userInitials.textContent = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+        }
+
+        // Check if user is logged in
+        if (userData.token && userData.id) {
+            updateNavForLoggedInUser(userData);
+        }
+
+        // Add typing effect for hero title
+        function typeWriter(element, text, speed = 100) {
+            let i = 0;
+            element.textContent = '';
+            
+            function type() {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            
+            type();
+        }
+
+        // Initialize typing effect
+        setTimeout(() => {
+            const heroTitle = document.querySelector('.hero h1');
+            if (heroTitle) {
+                typeWriter(heroTitle, 'Find Your Perfect Match', 150);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

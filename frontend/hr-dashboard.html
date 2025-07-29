@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Dashboard - AI Resume Matcher</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+     <header class="header">
+        <nav class="nav container">
+            <div class="logo">AI Resume Matcher</div>
+           <div class="top-right">
+    <ul class="nav-links">
+        <li><a href="#" onclick="logout()">Logout</a></li>
+    </ul>
+    <div class="profile-icon">VS</div>
+</div>
+            <!-- <div class="profile-icon" id="profileIcon"> -->
+                <span id="userInitials"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="dashboard">
+                <aside class="sidebar">
+                    <h3>Menu</h3>
+                    <ul>
+                        <li><a href="#" class="active" onclick="showSection('my-jobs')">My Jobs</a></li>
+                        <li><a href="#" onclick="showSection('post-job')">Post New Job</a></li>
+                        <li><a href="#" onclick="showSection('applications')">Applications</a></li>
+                        <li><a href="#" onclick="showSection('candidates')">Find Candidates</a></li>
+                    </ul>
+                </aside>
+
+                <div class="content">
+                    <!-- My Jobs Section -->
+                    <div id="my-jobs-section" class="section">
+                        <h2>My Posted Jobs</h2>
+                        <div id="myJobsContainer">
+                            <!-- Jobs will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Post Job Section -->
+                    <div id="post-job-section" class="section hidden">
+                        <h2>Post New Job</h2>
+                        <div id="jobAlert" class="alert alert-success hidden"></div>
+                        
+                        <form id="jobPostForm">
+                            <div class="form-group">
+                                <label for="title">Job Title</label>
+                                <input type="text" id="title" name="title" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="company">Company</label>
+                                <input type="text" id="company" name="company" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <input type="text" id="location" name="location" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="salary">Salary Range</label>
+                                <input type="text" id="salary" name="salary" placeholder="e.g., $50,000 - $70,000">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="skills_required">Required Skills (comma separated)</label>
+                                <input type="text" id="skills_required" name="skills_required" placeholder="JavaScript, React, Node.js">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="description">Job Description</label>
+                                <textarea id="description" name="description" required></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="requirements">Requirements</label>
+                                <textarea id="requirements" name="requirements"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn">Post Job</button>
+                        </form>
+                    </div>
+
+                    <!-- Applications Section -->
+                    <div id="applications-section" class="section hidden">
+                        <h2>Applications</h2>
+                        <div class="form-group">
+                            <label for="jobSelect">Select Job:</label>
+                            <select id="jobSelect" onchange="loadJobApplications()">
+                                <option value="">Select a job</option>
+                            </select>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table id="applicationsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Candidate Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Skills</th>
+                                        <th>Experience</th>
+                                        <th>Match Score</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicationsTableBody">
+                                    <!-- Applications will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Find Candidates Section -->
+                    <div id="candidates-section" class="section hidden">
+                        <h2>Find Top Candidates</h2>
+                        <div class="form-group">
+                            <label for="skillFilter">Filter by Skills:</label>
+                            <input type="text" id="skillFilter" placeholder="Enter skills to search">
+                            <button class="btn" onclick="filterCandidates()">Search</button>
+                        </div>
+                        
+                        <div id="candidatesContainer">
+                            <!-- Candidates will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        let currentUser = null;
+        
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || user.user_type !== 'hr') {
+            window.location.href = 'login.html';
+        }
+        
+        currentUser = user;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNavForLoggedInUser(currentUser);
+            loadMyJobs();
+            loadJobsForSelect();
+        });
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Remove active class from all menu items
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`${sectionName}-section`).classList.remove('hidden');
+            
+            // Add active class to clicked menu item
+            event.target.classList.add('active');
+            
+            // Load content based on section
+            switch(sectionName) {
+                case 'my-jobs':
+                    loadMyJobs();
+                    break;
+                case 'applications':
+                    loadJobsForSelect();
+                    break;
+            }
+        }
+
+        // Job posting form
+        document.getElementById('jobPostForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const jobData = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(jobData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('jobAlert', 'Job posted successfully!', 'success');
+                    e.target.reset();
+                    loadMyJobs();
+                } else {
+                    showAlert('jobAlert', data.error, 'error');
+                }
+            } catch (error) {
+                showAlert('jobAlert', 'Failed to post job. Please try again.', 'error');
+            }
+        });
+
+        async function loadMyJobs() {
+            try {
+                const response = await fetch('/api/jobs/my-jobs', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const jobs = await response.json();
+                displayMyJobs(jobs);
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        function displayMyJobs(jobs) {
+            const container = document.getElementById('myJobsContainer');
+            
+            if (jobs.length === 0) {
+                container.innerHTML = '<p>No jobs posted yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="job-grid">
+                    ${jobs.map(job => `
+                        <div class="job-card">
+                            <h3>${job.title}</h3>
+                            <div class="company">${job.company}</div>
+                            <div class="location">📍 ${job.location}</div>
+                            ${job.salary ? `<div class="salary">💰 ${job.salary}</div>` : ''}
+                            <div style="margin: 1rem 0;">
+                                <small>Posted: ${new Date(job.posted_date).toLocaleDateString()}</small>
+                            </div>
+                            <button class="btn" onclick="viewJobApplications(${job.id})">
+                                View Applications
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function loadJobsForSelect() {
+            try {
+                const response = await fetch('/api/jobs/my-jobs', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const jobs = await response.json();
+                const select = document.getElementById('jobSelect');
+                
+                select.innerHTML = '<option value="">Select a job</option>' +
+                    jobs.map(job => `<option value="${job.id}">${job.title} - ${job.company}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        async function loadJobApplications() {
+            const jobId = document.getElementById('jobSelect').value;
+            
+            if (!jobId) {
+                document.getElementById('applicationsTableBody').innerHTML = '';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/applications/job-applications/${jobId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const applications = await response.json();
+                displayJobApplications(applications);
+            } catch (error) {
+                console.error('Error loading applications:', error);
+            }
+        }
+
+        function displayJobApplications(applications) {
+            const tbody = document.getElementById('applicationsTableBody');
+            
+            if (applications.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8">No applications for this job yet.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = applications.map(app => `
+                <tr>
+                    <td>${app.full_name}</td>
+                    <td>${app.email}</td>
+                    <td>${app.phone || 'N/A'}</td>
+                    <td>${app.skills || 'N/A'}</td>
+                    <td>${app.experience_years || 'N/A'} years</td>
+                    <td>${app.match_score}%</td>
+                    <td><span class="status ${app.status}">${app.status}</span></td>
+                    <td>
+                        <select onchange="updateApplicationStatus(${app.id}, this.value)">
+                            <option value="applied" ${app.status === 'applied' ? 'selected' : ''}>Applied</option>
+                            <option value="shortlisted" ${app.status === 'shortlisted' ? 'selected' : ''}>Shortlisted</option>
+                            <option value="rejected" ${app.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                            <option value="hired" ${app.status === 'hired' ? 'selected' : ''}>Hired</option>
+                        </select>
+                        <button class="btn" style="margin-left: 10px;" onclick="sendEmail('${app.email}', '${app.full_name}')">
+                            Email
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateApplicationStatus(applicationId, status) {
+            try {
+                const response = await fetch(`/api/applications/update-status/${applicationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Status updated successfully!');
+                    loadJobApplications();
+                } else {
+                    alert(data.error);
+                }
+            } catch (error) {
+                alert('Failed to update status.');
+            }
+        }
+
+        function sendEmail(email, name) {
+            const subject = encodeURIComponent('Regarding Your Job Application');
+            const body = encodeURIComponent(`Dear ${name},\n\nThank you for your interest in our position.\n\nBest regards,\n${currentUser.full_name}`);
+            window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+        }
+
+        function viewJobApplications(jobId) {
+            document.getElementById('jobSelect').value = jobId;
+            showSection('applications');
+            loadJobApplications();
+        }
+    </script>
+</body>
+</html>
